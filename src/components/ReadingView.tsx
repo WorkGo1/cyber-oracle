@@ -142,12 +142,14 @@ export function ReadingView({
   persona,
   llm,
   useLLM,
+  fallbackNote,
 }: {
   reading: Reading
   scene: SceneConfig
   persona: Persona
   llm: LLMConfig
   useLLM: boolean
+  fallbackNote?: string
 }) {
   const [shareOpen, setShareOpen] = useState(false)
   const a = ACCENT[scene.accent] ?? ACCENT.acid
@@ -168,6 +170,15 @@ export function ReadingView({
           {reading.mode === 'llm' ? 'LLM 实时解读' : '本地解读'}
         </span>
       </motion.div>
+
+      {/* AI 降级说明 */}
+      {reading.mode === 'local' && fallbackNote && (
+        <div className="rounded-card border border-gold/40 bg-gold/5 px-4 py-3">
+          <p className="text-[12px] leading-relaxed text-gold">
+            ⚡ AI 请求失败（{fallbackNote}），本次由本地解读引擎完成。可到「设置」重新测试连通。
+          </p>
+        </div>
+      )}
 
       {/* 定调 */}
       {reading.tagline && (

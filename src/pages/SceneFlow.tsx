@@ -31,6 +31,7 @@ export default function SceneFlow() {
   const [cards, setCards] = useState<DrawnCard[] | null>(null)
   const [reading, setReading] = useState<Reading | null>(null)
   const [seed] = useState(() => makeSeed(sceneId, Date.now()))
+  const [llmFallback, setLlmFallback] = useState('')
 
   useEffect(() => {
     if (!scene) nav('/', { replace: true })
@@ -49,8 +50,9 @@ export default function SceneFlow() {
     setCards(drawn)
     haptic('success')
 
-    // LLM 轨：接管解读正文（按【标签】解析回结构化卡片），失败静默降级本地轨
+    // LLM 轨：接管解读正文（按【标签】解析回结构化卡片），失败降级本地轨并注明原因
     let finalReading: Reading | null = null
+    setLlmFallback('')
     if (llmActive) {
       try {
         const text = await llmChat(store.llm, [
@@ -70,8 +72,9 @@ export default function SceneFlow() {
           luck: parsed.luck ?? base.luck,
           reply: undefined,
         }
-      } catch {
+      } catch (e) {
         finalReading = null
+        setLlmFallback(e instanceof Error ? e.message : 'AI 请求失败')
       }
     }
     if (!finalReading) {
@@ -255,7 +258,7 @@ export default function SceneFlow() {
             {/* 阶段四：解读 */}
             {stage === 'reading' && reading && (
               <motion.div key="reading" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-                <ReadingView reading={reading} scene={scene} persona={persona} llm={store.llm} useLLM={llmActive} />
+                <ReadingView reading={reading} scene={scene} persona={persona} llm={store.llm} useLLM={llmActive} fallbackNote={llmFallback} />
               </motion.div>
             )}
           </AnimatePresence>

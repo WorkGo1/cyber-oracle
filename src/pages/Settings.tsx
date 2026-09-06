@@ -53,9 +53,13 @@ export default function Settings() {
       const reply = await llmChat(draft, [
         { role: 'user', content: '回复两个字：连通' },
       ], 12000)
-      setTestResult(`✓ 连通成功：${reply.slice(0, 30)}`)
+      store.setUseLLM(true)
+      setTestResult(`✓ 连通成功（${reply.slice(0, 20)}）· 已自动启用 AI 解读`)
     } catch (e) {
-      setTestResult(`✗ 连通失败：${e instanceof Error ? e.message : '未知错误'}`)
+      const reason = e instanceof Error ? e.message : '未知错误'
+      setTestResult(
+        `✗ 连通失败：${reason}。请检查地址/Key/模型；若为跨域(CORS)限制，需换支持浏览器的接口或加代理`,
+      )
     } finally {
       setTesting(false)
     }
@@ -108,23 +112,18 @@ export default function Settings() {
       </section>
 
       <section className="panel space-y-3 p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <span className="hud-tag">LLM 实时解读（可选）</span>
-          <button
-            onClick={() => {
-              store.setUseLLM(!store.useLLM)
-              store.setLLM(draft)
-            }}
-            disabled={!llmReady}
-            className={`press rounded-pill border px-3 py-1 text-[11px] ${
+          <span
+            className={`rounded-pill border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.1em] ${
               store.useLLM && llmReady ? 'border-acid/60 bg-acid/15 text-acid' : 'border-line text-t3'
-            } disabled:opacity-40`}
+            }`}
           >
-            {store.useLLM && llmReady ? '已开启' : '未开启'}
-          </button>
+            {store.useLLM && llmReady ? 'AI 已启用' : '本地解读模式'}
+          </span>
         </div>
         <p className="text-[11px] leading-relaxed text-t3">
-          接入任意 OpenAI 兼容接口后，解读将由 AI 实时生成。Key 仅存本机 localStorage，仅发往你填写的地址。不填则始终使用内置本地解读引擎。
+          接入任意 OpenAI 兼容接口后，解读将由 AI 实时生成（失败自动回退本地引擎）。Key 仅存本机 localStorage，仅发往你填写的地址。
         </p>
         <input
           value={draft.baseUrl}
@@ -155,10 +154,26 @@ export default function Settings() {
             className="btn-ghost flex-1 text-[13px] text-acid"
             style={{ borderColor: 'rgb(var(--c-acid))' }}
           >
-            {testing ? '测试中…' : '保存并测试'}
+            {testing ? '测试中…' : '保存并测试连通'}
+          </button>
+          <button
+            onClick={() => {
+              store.setLLM(draft)
+              store.setUseLLM(!store.useLLM)
+            }}
+            disabled={!llmReady}
+            aria-pressed={store.useLLM}
+            className={`btn-ghost flex-1 text-[13px] font-bold ${
+              store.useLLM && llmReady ? 'bg-acid/15 text-acid' : 'text-t2'
+            }`}
+            style={{ borderColor: 'rgb(var(--c-acid))' }}
+          >
+            {store.useLLM && llmReady ? '已启用 · 点击停用' : '启用 AI 解读'}
           </button>
         </div>
-        {testResult && <p className="font-mono text-[11px] text-t2">{testResult}</p>}
+        {testResult && (
+          <p className={`font-mono text-[11px] ${testResult.startsWith('✓') ? 'text-acid' : 'text-danger'}`}>{testResult}</p>
+        )}
       </section>
 
       <section className="panel p-4">
