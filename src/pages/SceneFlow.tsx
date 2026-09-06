@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PersonaPicker } from '@/components/PersonaPicker'
 import { Ritual } from '@/components/Ritual'
 import { ReadingView } from '@/components/ReadingView'
+import { Divining } from '@/components/Divining'
 import { sceneById } from '@/data/scenes'
 import { personaById, RECOMMENDED_PERSONA } from '@/data/personas'
 import type { DrawnCard, PersonaId } from '@/data/types'
@@ -17,7 +18,7 @@ import { haptic } from '@/lib/haptics'
 import { canDailyDraw, useAppStore } from '@/stores/useAppStore'
 import { todayKey } from '@/lib/date'
 
-type Stage = 'intro' | 'persona' | 'ritual' | 'reading'
+type Stage = 'intro' | 'persona' | 'ritual' | 'divining' | 'reading'
 
 export default function SceneFlow() {
   const { sceneId = '' } = useParams()
@@ -49,6 +50,7 @@ export default function SceneFlow() {
   async function finishRitual(drawn: DrawnCard[]) {
     setCards(drawn)
     haptic('success')
+    setStage('divining')
 
     // LLM 轨：接管解读正文（按【标签】解析回结构化卡片），失败降级本地轨并注明原因
     let finalReading: Reading | null = null
@@ -116,7 +118,7 @@ export default function SceneFlow() {
       <div className="sticky top-0 z-40 -mx-5 flex items-center gap-3 border-b border-line bg-bg/85 px-5 py-3 backdrop-blur-lg" style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}>
         <button
           onClick={() => {
-            if (stage === 'reading' || stage === 'intro') nav('/')
+            if (stage === 'reading' || stage === 'intro' || stage === 'divining') nav('/')
             else setStage(stage === 'ritual' ? 'persona' : 'intro')
           }}
           className="press flex h-9 w-9 items-center justify-center rounded-btn border border-line text-t2"
@@ -252,6 +254,13 @@ export default function SceneFlow() {
                   accent={scene.accent}
                   onDone={() => void finishRitual(cards)}
                 />
+              </motion.div>
+            )}
+
+            {/* 阶段三·五：AI 解读中 */}
+            {stage === 'divining' && (
+              <motion.div key="divining" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <Divining persona={persona} accentColor={accentVar} />
               </motion.div>
             )}
 

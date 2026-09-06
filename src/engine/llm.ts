@@ -73,8 +73,11 @@ export function parseStructuredReading(text: string): ParsedLLMReading {
   return { tagline, sections, luck }
 }
 
+/** LLM 请求超时：2 分钟（慢模型/长解读也够用） */
+export const LLM_TIMEOUT_MS = 120000
+
 /** OpenAI 兼容 chat/completions 调用；失败抛错由上层降级本地轨 */
-export async function llmChat(cfg: LLMConfig, messages: LLMMessage[], timeoutMs = 20000): Promise<string> {
+export async function llmChat(cfg: LLMConfig, messages: LLMMessage[], timeoutMs: number = LLM_TIMEOUT_MS): Promise<string> {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {

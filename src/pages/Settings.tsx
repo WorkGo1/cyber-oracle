@@ -52,7 +52,7 @@ export default function Settings() {
     try {
       const reply = await llmChat(draft, [
         { role: 'user', content: '回复两个字：连通' },
-      ], 12000)
+      ])
       store.setUseLLM(true)
       setTestResult(`✓ 连通成功（${reply.slice(0, 20)}）· 已自动启用 AI 解读`)
     } catch (e) {

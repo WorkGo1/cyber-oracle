@@ -92,7 +92,23 @@ function FollowUp({
               </motion.div>
             </div>
           ))}
+          {busy && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-fit max-w-[92%] rounded-btn rounded-bl-hud border border-line bg-bg px-3 py-2 text-[13px] text-t2"
+            >
+              <span className="mr-1.5 inline-block h-2 w-2 animate-blink rounded-full" style={{ background: ACCENT[accent]?.btn }} />
+              {persona.name}思考中…
+            </motion.div>
+          )}
         </div>
+      )}
+      {busy && turns.length === 0 && (
+        <p className="mb-3 flex items-center gap-2 text-[13px] text-t2">
+          <span className="inline-block h-2 w-2 animate-blink rounded-full" style={{ background: ACCENT[accent]?.btn }} />
+          {persona.name}思考中…
+        </p>
       )}
       {left > 0 ? (
         <>
