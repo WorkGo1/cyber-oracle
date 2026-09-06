@@ -32,7 +32,7 @@ export function buildSystemPrompt(persona: Persona, scene: SceneConfig, cards: D
     `# Role\n${persona.systemPrompt}\n你精通塔罗象征学与当代青年心理学，服务对象是约2000年前后出生的中国年轻打工人/学生。`,
     `# 调性\n人话 + 轻互联网热梗 + 心理学共情。拒绝晦涩传统神秘学术语（不得出现"圣杯三预示"这类表述，用牌名+人话）。拒绝说教。毒舌不伤人，治愈不灌汤。`,
     `# Context\n场景：${scene.name}（${scene.subtitle}）。\n用户的问题/输入：${'{question}'}\n抽到的牌：\n${cardBrief(cards)}`,
-    `# Output Requirements\n${slots}\n最后单独一行以「幸运补给：」开头，给一个具体的今日转运小彩蛋（如：喝一杯少糖乌龙茶、对老板已读不回5分钟）。\n全文200-350字，用短段落。`,
+    `# Output Requirements\n${slots}\n最后单独一行以「幸运补给：」开头，给一个具体的今日转运小彩蛋（如：喝一杯少糖乌龙茶、对老板已读不回5分钟）。\n# 排版规则（必须遵守）\n- 每个小节的标题行单独成行，格式为【标题】（如【表面态度】），不要用 Markdown 的 **、#、-、1. 等符号\n- 正文用短段落，段落间空行；不要输出列表符号、表格、代码块\n- 全文200-350字`,
   ].join('\n\n')
 }
 
@@ -47,27 +47,52 @@ export interface ParsedLLMReading {
   luck?: string
 }
 
-/** 把 LLM 按【标签】输出的文本解析回结构化解读；无标签时整段兜底 */
+/** 行首标题模式：【标签】 / **标签** / ### 标签（可带 1. 编号与冒号）（LLM 常无视格式指令返回 Markdown） */
+const HEADER_RE = [
+  /^【(.+?)】\s*(.*)$/,
+  /^\*\*(.+?)\*\*\s*[:：]?\s*(.*)$/,
+  /^#{1,4}\s+(.+?)\s*[:：]?\s*(.*)$/,
+]
+
+function cleanLine(s: string): string {
+  return s.replace(/\*\*/g, '').replace(/`/g, '').trim()
+}
+
+/** 把 LLM 输出解析回结构化解读；兼容【】与 Markdown 标题，无标签时整段兜底 */
 export function parseStructuredReading(text: string): ParsedLLMReading {
   const lines = text
-    .replace(/^#+\s*/gm, '')
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean)
   const sections: ParsedLLMReading['sections'] = []
   const preamble: string[] = []
   let luck: string | undefined
-  for (const line of lines) {
-    const m = line.match(/^【(.+?)】\s*(.*)$/)
-    if (m) {
-      sections.push({ key: `llm-${sections.length}`, label: m[1], body: m[2] ? [m[2]] : [] })
-    } else if (/^幸运补给[:：]/.test(line)) {
-      luck = line.replace(/^幸运补给[:：]\s*/, '')
-    } else if (sections.length === 0) {
-      preamble.push(line)
-    } else {
-      sections[sections.length - 1].body.push(line)
+  for (const rawLine of lines) {
+    const raw = rawLine.replace(/^\d+\s*[.、)]\s*/, '') // 去编号前缀
+    const plain = cleanLine(raw)
+    if (/^幸运补给[:：]?/.test(plain)) {
+      luck = plain.replace(/^幸运补给[:：]\s*/, '') || undefined
+      continue
     }
+    let matched = false
+    for (const re of HEADER_RE) {
+      const m = raw.match(re)
+      if (m) {
+        const label = cleanLine(m[1])
+        const rest = m[2] ? cleanLine(m[2]) : ''
+        // 幸运补给若以标题行形式出现，其后内容并入 luck
+        if (/幸运补给/.test(label)) {
+          luck = rest || luck || undefined
+        } else {
+          sections.push({ key: `llm-${sections.length}`, label, body: rest ? [rest] : [] })
+        }
+        matched = true
+        break
+      }
+    }
+    if (matched) continue
+    if (sections.length === 0) preamble.push(plain)
+    else sections[sections.length - 1].body.push(plain)
   }
   const tagline = (preamble[0] ?? sections[0]?.body[0] ?? '').slice(0, 60)
   return { tagline, sections, luck }

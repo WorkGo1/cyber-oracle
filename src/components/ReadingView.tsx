@@ -7,6 +7,7 @@ import { isLLMReady, llmChat, type LLMConfig } from '@/engine/llm'
 import { sfx } from '@/lib/audio'
 import { haptic } from '@/lib/haptics'
 import { ShareCardModal } from '@/components/ShareCardModal'
+import { MdText } from '@/components/MdText'
 
 const ACCENT: Record<string, { text: string; bar: string; glow: string; btn: string }> = {
   acid: { text: 'text-acid', bar: 'bg-acid', glow: 'shadow-glow-acid', btn: '#C8FF1E' },
@@ -88,7 +89,7 @@ function FollowUp({
                 animate={{ opacity: 1, y: 0 }}
                 className="w-fit max-w-[92%] rounded-btn rounded-bl-hud border border-line bg-bg px-3 py-2 text-[13px] leading-relaxed text-t1"
               >
-                {t.a}
+                <MdText text={t.a} strongClass="font-bold text-t1" />
               </motion.div>
             </div>
           ))}
@@ -204,7 +205,9 @@ export function ReadingView({
           className={`panel relative overflow-hidden p-4 ${a.glow}`}
         >
           <span className={`absolute inset-y-0 left-0 w-[3px] ${a.bar}`} />
-          <p className="font-display text-[18px] leading-snug text-t1">{reading.tagline}</p>
+          <p className="font-display text-[18px] leading-snug text-t1">
+            <MdText text={reading.tagline} strongClass={`font-bold ${a.text}`} />
+          </p>
         </motion.div>
       )}
 
@@ -295,7 +298,9 @@ export function ReadingView({
           </div>
           <div className="space-y-1.5">
             {s.body.map((p, j) => (
-              <p key={j} className="text-[14px] leading-[1.75] text-t1">{p}</p>
+              <p key={j} className="text-[14px] leading-[1.75] text-t1">
+                <MdText text={p} strongClass={`font-bold ${a.text}`} />
+              </p>
             ))}
           </div>
         </motion.div>
@@ -305,7 +310,9 @@ export function ReadingView({
       {reading.reply && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="panel border-cyan/30 p-4">
           <span className="hud-tag text-cyan">REPLY · 高情商回法</span>
-          <p className="mt-2 rounded-btn bg-cyan/5 p-3 text-[14px] leading-relaxed text-cyan">{reading.reply}</p>
+          <p className="mt-2 rounded-btn bg-cyan/5 p-3 text-[14px] leading-relaxed text-cyan">
+            <MdText text={reading.reply} />
+          </p>
         </motion.div>
       )}
 
@@ -313,12 +320,16 @@ export function ReadingView({
       {reading.action && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="panel p-4">
           <span className="hud-tag">ACTION · AI 专属建议</span>
-          <p className="mt-2 text-[14px] leading-[1.75] text-t1">{reading.action}</p>
+          <p className="mt-2 text-[14px] leading-[1.75] text-t1">
+            <MdText text={reading.action} strongClass={`font-bold ${a.text}`} />
+          </p>
         </motion.div>
       )}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="panel border-gold/25 p-4">
         <span className="hud-tag text-gold">LUCK · {persona.luckLead}</span>
-        <p className="mt-2 font-display text-[16px] text-gold">🎁 {reading.luck}</p>
+        <p className="mt-2 font-display text-[16px] text-gold">
+          🎁 <MdText text={reading.luck} strongClass="font-bold text-gold" />
+        </p>
       </motion.div>
 
       {/* 深潜 */}
