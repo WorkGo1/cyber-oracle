@@ -1,0 +1,103 @@
+@import '@fontsource/orbitron/500.css';
+@import '@fontsource/orbitron/700.css';
+@import '@fontsource/orbitron/900.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/700.css';
+@import '@fontsource/zcool-qingke-huangyou/400.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --c-bg: 7 7 12;
+  --c-surface: 14 14 24;
+  --c-surface2: 21 21 36;
+  --c-line: 35 35 56;
+  --c-acid: 200 255 30;
+  --c-magenta: 255 61 180;
+  --c-violet: 139 92 246;
+  --c-cyan: 34 228 255;
+  --c-gold: 255 200 56;
+  --c-danger: 255 77 94;
+  --c-t1: 244 244 248;
+  --c-t2: 160 160 184;
+  --c-t3: 99 99 126;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg font-body text-t1 antialiased;
+    min-height: 100dvh;
+    background-image: linear-gradient(rgba(var(--c-acid) / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--c-acid) / 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  /* 扫描线质感层 */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.035) 0px,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+  ::selection {
+    background: rgb(var(--c-acid) / 0.85);
+    color: #07070c;
+  }
+}
+
+@layer components {
+  /* 铬金属渐变字 */
+  .text-chrome {
+    background: linear-gradient(180deg, #ffffff 0%, #c3c9d6 42%, #59607a 55%, #e9edf5 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* 全息渐变描边容器 */
+  .holo-border {
+    position: relative;
+    border: 1px solid transparent;
+    background: linear-gradient(rgb(var(--c-surface)), rgb(var(--c-surface))) padding-box,
+      linear-gradient(135deg, rgba(var(--c-acid) / 0.8), rgba(var(--c-cyan) / 0.5), rgba(var(--c-magenta) / 0.8)) border-box;
+  }
+  /* HUD 标签 */
+  .hud-tag {
+    @apply inline-flex items-center gap-1 rounded-hud border border-line px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.15em] text-t3;
+  }
+  /* 面板：surface + 左侧场景色竖条由内联样式提供 */
+  .panel {
+    @apply rounded-card border border-line bg-surface;
+  }
+  .btn-primary {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-btn bg-acid px-5 font-bold text-[#07070C] transition-transform active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40;
+  }
+  .btn-ghost {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-btn border px-5 transition-transform active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40;
+  }
+  .press {
+    @apply transition-transform active:scale-[0.96];
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
