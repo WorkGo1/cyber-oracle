@@ -41,6 +41,38 @@ export interface LLMMessage {
   content: string
 }
 
+export interface ParsedLLMReading {
+  tagline: string
+  sections: { key: string; label: string; body: string[] }[]
+  luck?: string
+}
+
+/** 把 LLM 按【标签】输出的文本解析回结构化解读；无标签时整段兜底 */
+export function parseStructuredReading(text: string): ParsedLLMReading {
+  const lines = text
+    .replace(/^#+\s*/gm, '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+  const sections: ParsedLLMReading['sections'] = []
+  const preamble: string[] = []
+  let luck: string | undefined
+  for (const line of lines) {
+    const m = line.match(/^【(.+?)】\s*(.*)$/)
+    if (m) {
+      sections.push({ key: `llm-${sections.length}`, label: m[1], body: m[2] ? [m[2]] : [] })
+    } else if (/^幸运补给[:：]/.test(line)) {
+      luck = line.replace(/^幸运补给[:：]\s*/, '')
+    } else if (sections.length === 0) {
+      preamble.push(line)
+    } else {
+      sections[sections.length - 1].body.push(line)
+    }
+  }
+  const tagline = (preamble[0] ?? sections[0]?.body[0] ?? '').slice(0, 60)
+  return { tagline, sections, luck }
+}
+
 /** OpenAI 兼容 chat/completions 调用；失败抛错由上层降级本地轨 */
 export async function llmChat(cfg: LLMConfig, messages: LLMMessage[], timeoutMs = 20000): Promise<string> {
   const ctrl = new AbortController()

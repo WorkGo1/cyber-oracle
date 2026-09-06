@@ -45,6 +45,13 @@ function orient(card: DrawnCard): Orientation {
   return card.reversed ? 'rev' : 'up'
 }
 
+/** 引用用户问题前清理尾部标点与空白，避免「…挺清闲啊？，」这类拼接 */
+function cleanQuote(q: string, max = 18): string {
+  const t = q.trim().replace(/[？?！!。，,.\s]+$/g, '')
+  if (!t) return '对方的意思'
+  return t.length > max ? t.slice(0, max) + '…' : t
+}
+
 const REPLY_TEMPLATES = [
   '「收到，我理解您的意思是{X}，我先按这个方向推进，有偏差您随时纠。」',
   '「好的，这块我排个优先级：现有需求我先把交付做稳，新的事项我们拉个会明确下范围。」',
@@ -140,8 +147,9 @@ export function composeReading(
         cardIndex: 2,
       },
     ]
-    reading.reply = pick(rand, REPLY_TEMPLATES).replace('{X}', question.length > 18 ? question.slice(0, 18) + '…' : question || '您的意思')
-    reading.action = `${adviceLead}${c.card.action[o(2)]}`
+    reading.reply = pick(rand, REPLY_TEMPLATES).replace('{X}', cleanQuote(question))
+    // 应对打法段落已含完整建议，不再重复渲染 ACTION 面板
+    reading.action = ''
   } else if (scene.id === 'crush') {
     const [a, b, c] = cards
     reading.tagline = `${opener} ${b.card.tone[o(1)]}`

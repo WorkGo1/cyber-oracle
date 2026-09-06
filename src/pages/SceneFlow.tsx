@@ -9,7 +9,7 @@ import { personaById, RECOMMENDED_PERSONA } from '@/data/personas'
 import type { DrawnCard, PersonaId } from '@/data/types'
 import { composeReading, type Reading } from '@/engine/interpret'
 import { drawCards } from '@/engine/draw'
-import { buildSystemPrompt, isLLMReady, llmChat } from '@/engine/llm'
+import { buildSystemPrompt, isLLMReady, llmChat, parseStructuredReading } from '@/engine/llm'
 import { checkCrisis, CRISIS_INFO } from '@/engine/guard'
 import { makeSeed } from '@/lib/rng'
 import { sfx } from '@/lib/audio'
@@ -49,7 +49,7 @@ export default function SceneFlow() {
     setCards(drawn)
     haptic('success')
 
-    // LLM 轨
+    // LLM 轨：接管解读正文（按【标签】解析回结构化卡片），失败静默降级本地轨
     let finalReading: Reading | null = null
     if (llmActive) {
       try {
@@ -58,15 +58,20 @@ export default function SceneFlow() {
           { role: 'user', content: question || '（用户没有输入具体问题，请针对场景主题直接解读）' },
         ])
         const base = composeReading(scene!, persona, drawn, seed, question)
+        const parsed = parseStructuredReading(text)
         finalReading = {
           ...base,
           mode: 'llm',
-          tagline: text.split('\n')[0].slice(0, 40),
-          sections: [{ key: 'llm', label: `${persona.name}的解读`, body: text.split('\n').filter(Boolean) }],
+          tagline: parsed.tagline || base.tagline,
+          sections: parsed.sections.length
+            ? parsed.sections
+            : [{ key: 'llm', label: `${persona.name}的解读`, body: text.split('\n').filter(Boolean) }],
           action: '',
+          luck: parsed.luck ?? base.luck,
+          reply: undefined,
         }
       } catch {
-        finalReading = null // 静默降级本地轨
+        finalReading = null
       }
     }
     if (!finalReading) {
