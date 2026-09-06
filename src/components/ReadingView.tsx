@@ -8,6 +8,7 @@ import { sfx } from '@/lib/audio'
 import { haptic } from '@/lib/haptics'
 import { ShareCardModal } from '@/components/ShareCardModal'
 import { MdText } from '@/components/MdText'
+import { CardFace } from '@/components/TarotCardView'
 
 const ACCENT: Record<string, { text: string; bar: string; glow: string; btn: string }> = {
   acid: { text: 'text-acid', bar: 'bg-acid', glow: 'shadow-glow-acid', btn: '#C8FF1E' },
@@ -195,6 +196,37 @@ export function ReadingView({
             ⚡ AI 请求失败（{fallbackNote}），本次由本地解读引擎完成。可到「设置」重新测试连通。
           </p>
         </div>
+      )}
+
+      {/* 我的牌阵：本局抽到的牌 */}
+      {reading.cards.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.03 } }}
+          className="panel p-4"
+        >
+          <span className={`hud-tag ${a.text}`}>SPREAD · 我的牌阵</span>
+          <div className="mt-3 flex items-start justify-center gap-3">
+            {reading.cards.map((d, i) => (
+              <div key={i} className="flex flex-col items-center gap-1.5" style={{ width: reading.cards.length > 2 ? 92 : 110 }}>
+                <div className="aspect-[2/3.2] w-full" style={{ transform: d.reversed ? 'rotate(180deg)' : undefined }}>
+                  <CardFace
+                    name={d.card.name}
+                    latin={d.card.latin}
+                    roman={d.card.roman}
+                    motif={d.card.motif}
+                    suit={d.card.suit}
+                    rank={d.card.rank}
+                  />
+                </div>
+                <span className="hud-tag whitespace-nowrap" style={{ fontSize: 9, letterSpacing: '0.04em' }}>
+                  {d.reversed ? '逆位' : '正位'}
+                  {scene.spread.positions[i]?.label ? `·${scene.spread.positions[i].label}` : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       )}
 
       {/* 定调 */}
